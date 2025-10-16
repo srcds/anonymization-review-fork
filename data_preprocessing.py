@@ -390,12 +390,117 @@ def preprocess_figure_S1(df, other_threshold = 5):
     # Save to csv
     df.to_csv('data_figure_S1.csv', sep=";", index=False)
 
+def preprocess_figure_MIE(df, other_threshold_5a=20, other_threshold_5b=0):
+
+    def filter_crossborder_origin(row):
+        return row['Data origin_list'] != row["First author"]
+
+    def filter_various(row):
+        return row['Data origin_list'] != "various"
+
+    df = df.explode('Data origin_list')
+    df = df[df.apply(filter_various, axis=1)]
+    df_crossborder = df[df.apply(filter_crossborder_origin, axis=1)]
+
+    # Read external CSV to append the name of countries
+    auxiliary_data = pd.read_csv("auxiliary_data/Country_information.csv", sep=";")[["Country", "World Bank income group"]]
+    df_crossborder = pd.merge(df_crossborder, auxiliary_data, left_on='First author', right_on="Country", how='left')
+    df_crossborder = df_crossborder.rename(columns={"World Bank income group": "World Bank income group (First author)"})
+    df_crossborder = pd.merge(df_crossborder, auxiliary_data, left_on='Data origin_list', right_on="Country", how='left')
+    df_crossborder = df_crossborder.rename(columns={"World Bank income group": "World Bank income group (Data origin)"})
+
+    """ 
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Calculate data for figure 5b
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    """
+
+    # Filter combinations that do occure less than "other_threshold_5b" times
+    #df_combinations = df_crossborder.groupby(['World Bank income group (First author)', 'World Bank income group (Data origin)']).filter(lambda x: len(x) >= other_threshold_5b)[['World Bank income group (First author)', 'World Bank income group (Data origin)']]
+    df_combinations = (
+        df_crossborder
+        .groupby(['World Bank income group (First author)', 'World Bank income group (Data origin)'])
+        .size()  # count occurrences
+        .reset_index(name='Count')  # convert to dataframe with a column "Count"
+    )
+
+    # Append full country name
+    #df_combinations = pd.merge(df_combinations, auxiliary_data, left_on='First author', right_on='Country', how='left')
+    #df_combinations = df_combinations.rename(columns={"Name (Country)": "Name (Country first author)"})
+    #df_combinations = pd.merge(df_combinations, auxiliary_data, left_on='Data origin_list', right_on='Country', how='left')
+    #df_combinations = df_combinations.rename(columns={"Name (Country)": "Name (Country data origin)"})
+    #df_combinations = df_combinations[["First author", "Data origin_list",	"Name (Country first author)", "Name (Country data origin)"]]
+
+    # Save to csv
+    df_combinations.to_csv('data_figure_MIE.csv', sep =";", index=False)
+
+def preprocess_figure_MIE2(df, income_group, other_threshold = 1):
+    def filter_only_assigned_ICD_chapter(row):
+        return row['ICD-10 chapter'] != ""
+
+    def filter_crossborder_origin(row):
+        return row['Data origin_list'] != row["First author"]
+
+    def filter_various(row):
+        return row['Data origin_list'] != "various"
+
+    def filter_for_income_group(row):
+        return row['World Bank income group'] == income_group
+
+    # Split between corssborder and domestic uses
+    df = df.explode('Data origin_list')
+    df = df[df.apply(filter_various, axis=1)]
+    #df_crossborder = df[df.apply(filter_crossborder_origin, axis=1)]
+    df_domestic = df[df.apply(filter_crossborder_origin, axis=1)]
+
+    # Read external CSV to append income group to first author
+    auxiliary_data = pd.read_csv("auxiliary_data/Country_information.csv", sep=";")[["Country", "World Bank income group"]]
+    df_domestic = pd.merge(df_domestic, auxiliary_data, left_on='First author', right_on="Country", how='left')
+
+    # Remove records not assigned to a chapter
+    df_domestic = df_domestic[df_domestic.apply(filter_only_assigned_ICD_chapter, axis=1)]
+
+    # Filter for specific income group
+    df_domestic = df_domestic[df_domestic.apply(filter_for_income_group, axis=1)]
+
+    # Count occurrences of chapters
+    df = df_domestic['ICD-10 chapter'].value_counts().reset_index()
+    df.columns = ['ICD-10 chapter', 'Count (ICD-10 chapter)']
+
+    # Read external CSV with total number of articles published
+    auxiliary_data = pd.read_csv("auxiliary_data/ICD-10_chapter_mapping.csv", sep=";",skiprows=0, dtype=str)
+    df = pd.merge(df, auxiliary_data, on='ICD-10 chapter', how='outer')
+
+    # Fill missing values with 0
+    df.fillna(0, inplace=True)
+
+    # Convert float counts to integers
+    df['Count (ICD-10 chapter)'] = df['Count (ICD-10 chapter)'].astype(int)
+
+    # Calculate distribution
+    df['Distribution (ICD-10 chapter)'] = df['Count (ICD-10 chapter)'] * 100 / df['Count (ICD-10 chapter)'].sum()
+
+    # Split country files into countries commonly mentioned and "other" by given threshold
+    df_other = df[df["Distribution (ICD-10 chapter)"] < other_threshold]
+    df = df[df["Distribution (ICD-10 chapter)"] >= other_threshold]
+
+    # Sort
+    df = df.sort_values("Count (ICD-10 chapter)", ascending=False)
+
+    # Create and append "other" column
+    row_other = {"ICD-10 chapter": "other", "Name (ICD-10 chapter)": "other", "Count (ICD-10 chapter)": df_other["Count (ICD-10 chapter)"].sum(), "Distribution (ICD-10 chapter)": df_other["Distribution (ICD-10 chapter)"].sum()}
+    df = df._append(row_other, ignore_index=True)
+
+    df.to_csv('data_figure_MIE2.csv', sep =";", index=False)
+
 df_raw = load_and_preprocess_charting()
 #preprocess_scimagojr()
-preprocess_figure_2(df_raw)
-preprocess_figure_3(df_raw)
-preprocess_figure_4(df_raw)
-preprocess_figure_5(df_raw)
-preprocess_figure_6(df_raw)
-preprocess_figure_7(df_raw)
+#preprocess_figure_2(df_raw)
+#preprocess_figure_3(df_raw)
+#preprocess_figure_4(df_raw)
+#preprocess_figure_5(df_raw)
+#preprocess_figure_6(df_raw)
+#preprocess_figure_7(df_raw)
+#preprocess_figure_MIE(df_raw)
+preprocess_figure_MIE2(df_raw, "High-income economies")
 #preprocess_figure_S1(df_raw)

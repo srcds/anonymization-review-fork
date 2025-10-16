@@ -1,0 +1,13 @@
+ICD-10 chapter;Count (ICD-10 chapter);Name (ICD-10 chapter);Distribution (ICD-10 chapter)
+1;13;Certain infectious and parasitic diseases;35.13513513513514
+2;7;Neoplasms;18.91891891891892
+9;4;Diseases of the circulatory system;10.81081081081081
+22;3;Codes for special purposes (COVID-19);8.108108108108109
+4;3;Endocrine, nutritional and metabolic diseases;8.108108108108109
+19;2;0;5.405405405405405
+11;1;Diseases of the digestive system;2.7027027027027026
+12;1;Diseases of the skin and subcutaneous tissue;2.7027027027027026
+15;1;0;2.7027027027027026
+16;1;0;2.7027027027027026
+17;1;0;2.7027027027027026
+other;0;other;0.0
