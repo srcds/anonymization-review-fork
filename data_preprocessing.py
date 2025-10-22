@@ -390,7 +390,7 @@ def preprocess_figure_S1(df, other_threshold = 5):
     # Save to csv
     df.to_csv('data_figure_S1.csv', sep=";", index=False)
 
-def preprocess_figure_MIE(df, other_threshold_5a=20, other_threshold_5b=0):
+def preprocess_figure_MIE_flows(df, other_threshold_5a=20, other_threshold_5b=0):
 
     def filter_crossborder_origin(row):
         return row['Data origin_list'] != row["First author"]
@@ -416,13 +416,10 @@ def preprocess_figure_MIE(df, other_threshold_5a=20, other_threshold_5b=0):
     """
 
     # Filter combinations that do occure less than "other_threshold_5b" times
-    #df_combinations = df_crossborder.groupby(['World Bank income group (First author)', 'World Bank income group (Data origin)']).filter(lambda x: len(x) >= other_threshold_5b)[['World Bank income group (First author)', 'World Bank income group (Data origin)']]
-    df_combinations = (
-        df_crossborder
-        .groupby(['World Bank income group (First author)', 'World Bank income group (Data origin)'])
-        .size()  # count occurrences
-        .reset_index(name='Count')  # convert to dataframe with a column "Count"
-    )
+    df_combinations = df_crossborder.groupby(['World Bank income group (Data origin)', 'World Bank income group (First author)']).filter(lambda x: len(x) >= other_threshold_5b)[['World Bank income group (First author)', 'World Bank income group (Data origin)']]
+    #df_combinations = (df_crossborder.groupby(['World Bank income group (First author)', 'World Bank income group (Data origin)']).size().reset_index(name='Count') )
+
+    df_combinations = df_combinations[['World Bank income group (Data origin)', 'World Bank income group (First author)']]
 
     # Append full country name
     #df_combinations = pd.merge(df_combinations, auxiliary_data, left_on='First author', right_on='Country', how='left')
@@ -432,7 +429,7 @@ def preprocess_figure_MIE(df, other_threshold_5a=20, other_threshold_5b=0):
     #df_combinations = df_combinations[["First author", "Data origin_list",	"Name (Country first author)", "Name (Country data origin)"]]
 
     # Save to csv
-    df_combinations.to_csv('data_figure_MIE.csv', sep =";", index=False)
+    df_combinations.to_csv('data_figure_MIE_flows.csv', sep =";", index=False)
 
 def preprocess_figure_MIE2(df, income_group, other_threshold = 1):
     def filter_only_assigned_ICD_chapter(row):
@@ -501,6 +498,6 @@ df_raw = load_and_preprocess_charting()
 #preprocess_figure_5(df_raw)
 #preprocess_figure_6(df_raw)
 #preprocess_figure_7(df_raw)
-#preprocess_figure_MIE(df_raw)
-preprocess_figure_MIE2(df_raw, "High-income economies")
+preprocess_figure_MIE_flows(df_raw)
+#preprocess_figure_MIE2(df_raw, "High-income economies")
 #preprocess_figure_S1(df_raw)
