@@ -1,0 +1,8 @@
+Name (ICD-10 chapter);ICD-10 chapter;Count (high-income, domestic);Distribution (high-income, domestic);Count (high-income, non-domestic);Distribution (high-income, non-domestic);Count (non-high-income, domestic);Distribution (non-high-income, domestic)
+Neoplasms;2;147;17.94871795;28;14.81481481;7;18.91891892
+Diseases of the circulatory system;9;112;13.67521368;23;12.16931217;4;10.81081081
+Mental and behavioural disorders;5;110;13.43101343;13;6.878306878;0;0
+Endocrine, nutritional and metabolic diseases;4;74;9.035409035;25;13.22751323;3;8.108108108
+Codes for special purposes (COVID-19);22;55;6.715506716;18;9.523809524;3;8.108108108
+Certain infectious and parasitic diseases;1;51;6.227106227;24;12.6984127;13;35.13513514
+other;other;270;32.96703297;58;30.68783069;7;18.91891892

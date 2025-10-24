@@ -431,7 +431,7 @@ def preprocess_figure_MIE_flows(df, other_threshold_5a=20, other_threshold_5b=0)
     # Save to csv
     df_combinations.to_csv('data_figure_MIE_flows.csv', sep =";", index=False)
 
-def preprocess_figure_MIE2(df, income_group, other_threshold = 1):
+def preprocess_figure_MIE_distri(df, income_groups, domestic=True):
     def filter_only_assigned_ICD_chapter(row):
         return row['ICD-10 chapter'] != ""
 
@@ -442,30 +442,33 @@ def preprocess_figure_MIE2(df, income_group, other_threshold = 1):
         return row['Data origin_list'] != "various"
 
     def filter_for_income_group(row):
-        return row['World Bank income group'] == income_group
+        return row['World Bank income group'] in income_groups
 
     # Split between corssborder and domestic uses
     df = df.explode('Data origin_list')
     df = df[df.apply(filter_various, axis=1)]
-    #df_crossborder = df[df.apply(filter_crossborder_origin, axis=1)]
-    df_domestic = df[df.apply(filter_crossborder_origin, axis=1)]
+    if domestic:
+        df = df[~df.apply(filter_crossborder_origin, axis=1)]
+    else:
+        df = df[df.apply(filter_crossborder_origin, axis=1)]
 
     # Read external CSV to append income group to first author
     auxiliary_data = pd.read_csv("auxiliary_data/Country_information.csv", sep=";")[["Country", "World Bank income group"]]
-    df_domestic = pd.merge(df_domestic, auxiliary_data, left_on='First author', right_on="Country", how='left')
+    df = pd.merge(df, auxiliary_data, left_on='First author', right_on="Country", how='left')
 
     # Remove records not assigned to a chapter
-    df_domestic = df_domestic[df_domestic.apply(filter_only_assigned_ICD_chapter, axis=1)]
+    df = df[df.apply(filter_only_assigned_ICD_chapter, axis=1)]
 
     # Filter for specific income group
-    df_domestic = df_domestic[df_domestic.apply(filter_for_income_group, axis=1)]
+    df = df[df.apply(filter_for_income_group, axis=1)]
 
     # Count occurrences of chapters
-    df = df_domestic['ICD-10 chapter'].value_counts().reset_index()
+    df = df['ICD-10 chapter'].value_counts().reset_index()
     df.columns = ['ICD-10 chapter', 'Count (ICD-10 chapter)']
 
     # Read external CSV with total number of articles published
-    auxiliary_data = pd.read_csv("auxiliary_data/ICD-10_chapter_mapping.csv", sep=";",skiprows=0, dtype=str)
+    auxiliary_data = pd.read_csv("auxiliary_data/ICD-10_chapter_mapping_selected.csv", sep=";",skiprows=0, dtype=str)
+    explicit_chapters = auxiliary_data['ICD-10 chapter'].unique()
     df = pd.merge(df, auxiliary_data, on='ICD-10 chapter', how='outer')
 
     # Fill missing values with 0
@@ -478,8 +481,8 @@ def preprocess_figure_MIE2(df, income_group, other_threshold = 1):
     df['Distribution (ICD-10 chapter)'] = df['Count (ICD-10 chapter)'] * 100 / df['Count (ICD-10 chapter)'].sum()
 
     # Split country files into countries commonly mentioned and "other" by given threshold
-    df_other = df[df["Distribution (ICD-10 chapter)"] < other_threshold]
-    df = df[df["Distribution (ICD-10 chapter)"] >= other_threshold]
+    df_other = df[~df['ICD-10 chapter'].isin(explicit_chapters)]
+    df = df[df['ICD-10 chapter'].isin(explicit_chapters)]
 
     # Sort
     df = df.sort_values("Count (ICD-10 chapter)", ascending=False)
@@ -488,7 +491,7 @@ def preprocess_figure_MIE2(df, income_group, other_threshold = 1):
     row_other = {"ICD-10 chapter": "other", "Name (ICD-10 chapter)": "other", "Count (ICD-10 chapter)": df_other["Count (ICD-10 chapter)"].sum(), "Distribution (ICD-10 chapter)": df_other["Distribution (ICD-10 chapter)"].sum()}
     df = df._append(row_other, ignore_index=True)
 
-    df.to_csv('data_figure_MIE2.csv', sep =";", index=False)
+    df.to_csv('data_figure_MIE2_%s_%s.csv' % (income_groups, domestic), sep =";", index=False)
 
 df_raw = load_and_preprocess_charting()
 #preprocess_scimagojr()
@@ -498,6 +501,8 @@ df_raw = load_and_preprocess_charting()
 #preprocess_figure_5(df_raw)
 #preprocess_figure_6(df_raw)
 #preprocess_figure_7(df_raw)
-preprocess_figure_MIE_flows(df_raw)
-#preprocess_figure_MIE2(df_raw, "High-income economies")
+#preprocess_figure_MIE_flows(df_raw)
+preprocess_figure_MIE_distri(df_raw, ["High-income economies"], True)
+preprocess_figure_MIE_distri(df_raw, ["High-income economies"], False)
+preprocess_figure_MIE_distri(df_raw, ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'], True)
 #preprocess_figure_S1(df_raw)
