@@ -493,6 +493,65 @@ def preprocess_figure_MIE_distri(df, income_groups, domestic=True):
 
     df.to_csv('data_figure_MIE2_%s_%s.csv' % (income_groups, domestic), sep =";", index=False)
 
+def preprocess_MIE_IncomeGroup_dist(df, article_origin_mode = True, count_item = 'Data origin'):
+
+    def filter_various(row):
+        return row['Data origin_list'] != "various"
+
+    def filter_only_single_data_origin(row):
+        origin_list = row['Data origin_list']
+        origin = origin_list[0]
+        return len(origin_list) == 1 and origin != "various"
+
+    def filter_domestic_use(row):
+        return row['Data origin'] == row["First author"]
+
+    def filter_crossborder_origin(row):
+        return row['Data origin_list'] != row["First author"]
+
+
+
+    if article_origin_mode:
+        # Remove records with more than one data origin
+        df = df[df.apply(filter_only_single_data_origin, axis=1)]
+        # Filter articles where first author and data originate from the same country
+        df = df[df.apply(filter_domestic_use, axis=1)]
+    else:
+        # Split between corssborder and domestic uses
+        df = df.explode('Data origin_list')
+        df = df[df.apply(filter_various, axis=1)]
+
+    # Count occurrences of data origin
+    name_count_column = "Count (%s)" % count_item
+    data_origin_counts = df[count_item].value_counts().reset_index()
+    data_origin_counts.columns = ['Country', name_count_column]
+
+    auxiliary_data_country_information = pd.read_csv("auxiliary_data/Country_information.csv", sep=";", dtype=str, na_filter=False)[["Country", "Name (Country)", "World Bank income group"]]
+    auxiliary_data_citable_documents = pd.read_csv("auxiliary_data/Citable_documents_per_country.csv", sep=";")[["Name (Country)", "Citable documents_total"]]
+    df = pd.merge(data_origin_counts, auxiliary_data_country_information, how="outer", on="Country")
+    df = pd.merge(df, auxiliary_data_citable_documents, on='Name (Country)', how='outer')
+
+    df = (
+        df.groupby("World Bank income group", dropna=False)
+        .agg({
+            name_count_column: "sum",
+            "Citable documents_total": "sum"
+        })
+        .reset_index()
+    )
+
+    # Calculate data origin per 1000 citable documents
+    df["Data origin per 1000 citable documents"] = df[name_count_column] * 1000 / df["Citable documents_total"]
+
+
+    # Sort
+    df = df.sort_values(['Data origin per 1000 citable documents'], ascending=[False])
+
+
+
+    # Save to csv
+    df.to_csv('data_figure_MIE_IncomeGroup_dist_%s_%s.csv' % (article_origin_mode, count_item), sep =";", index=False)
+
 df_raw = load_and_preprocess_charting()
 #preprocess_scimagojr()
 #preprocess_figure_2(df_raw)
@@ -502,7 +561,11 @@ df_raw = load_and_preprocess_charting()
 #preprocess_figure_6(df_raw)
 #preprocess_figure_7(df_raw)
 #preprocess_figure_MIE_flows(df_raw)
-preprocess_figure_MIE_distri(df_raw, ["High-income economies"], True)
-preprocess_figure_MIE_distri(df_raw, ["High-income economies"], False)
-preprocess_figure_MIE_distri(df_raw, ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'], True)
+#preprocess_figure_MIE_distri(df_raw, ["High-income economies"], True)
+#preprocess_figure_MIE_distri(df_raw, ["High-income economies"], False)
+#preprocess_figure_MIE_distri(df_raw, ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'], True)
+#preprocess_MIE_IncomeGroup_dist(df_raw, True)
+preprocess_MIE_IncomeGroup_dist(df_raw, False, 'Data origin_list')
+#preprocess_MIE_IncomeGroup_dist(df_raw, False, 'First author')
+
 #preprocess_figure_S1(df_raw)
