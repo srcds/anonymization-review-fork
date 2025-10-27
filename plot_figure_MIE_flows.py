@@ -54,11 +54,11 @@ def plot_figure_MIE_flows(df):
     # Plot sankey
     sky = Sankey(df, layerLabels = layer_labels,  colorDict=color_dict, colorMode="layer", stripColor='left', )
     #sky = Sankey(df, layerLabels = layer_labels, colorMode="layer", stripColor='left', )
-    fig, ax = sky.plot(figSize=(7, 4), fontSize=10, boxInterv=0.05, boxWidth=0.5, stripLen=8)
+    fig, ax = sky.plot(figSize=(6, 3.5), fontSize=10, boxInterv=0.05, boxWidth=0.5, stripLen=8)
 
     # Add label for "axes"
-    ax.text(0, 690, 'Data source', weight='bold', fontsize=10, ha="left", va="bottom")
-    ax.text(9, 690, 'ICD-10 chapter', weight='bold', fontsize=10, ha="right", va="bottom")
+    ax.text(0, 235, 'Data origin', weight='bold', fontsize=10, ha="left", va="bottom")
+    ax.text(9, 235, 'First author', weight='bold', fontsize=10, ha="right", va="bottom")
 
     # Plot and save
     fig.tight_layout()
