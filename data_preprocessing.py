@@ -390,7 +390,7 @@ def preprocess_figure_S1(df, other_threshold = 5):
     # Save to csv
     df.to_csv('data_figure_S1.csv', sep=";", index=False)
 
-def preprocess_figure_MIE_flows(df, other_threshold_5a=20, other_threshold_5b=0):
+def preprocess_figure_MIE_flows(df, other_threshold_5b=0):
 
     def filter_crossborder_origin(row):
         return row['Data origin_list'] != row["First author"]
@@ -400,14 +400,14 @@ def preprocess_figure_MIE_flows(df, other_threshold_5a=20, other_threshold_5b=0)
 
     df = df.explode('Data origin_list')
     df = df[df.apply(filter_various, axis=1)]
-    df_crossborder = df[df.apply(filter_crossborder_origin, axis=1)]
 
-    # Read external CSV to append the name of countries
+    # Read external CSV to append income group to first author
     auxiliary_data = pd.read_csv("auxiliary_data/Country_information.csv", sep=";")[["Country", "World Bank income group"]]
-    df_crossborder = pd.merge(df_crossborder, auxiliary_data, left_on='First author', right_on="Country", how='left')
-    df_crossborder = df_crossborder.rename(columns={"World Bank income group": "World Bank income group (First author)"})
-    df_crossborder = pd.merge(df_crossborder, auxiliary_data, left_on='Data origin_list', right_on="Country", how='left')
-    df_crossborder = df_crossborder.rename(columns={"World Bank income group": "World Bank income group (Data origin)"})
+    df = pd.merge(df, auxiliary_data.rename(columns={"World Bank income group": "Origin income group"}),left_on='Data origin_list', right_on="Country", how='left')
+    df = pd.merge(df, auxiliary_data.rename(columns={"World Bank income group": "Author income group"}),left_on="First author", right_on="Country", how="left")
+
+    df["same_group"] = (df["Author income group"] == df["Origin income group"])
+    df = df[~df["same_group"]]
 
     """ 
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -416,10 +416,10 @@ def preprocess_figure_MIE_flows(df, other_threshold_5a=20, other_threshold_5b=0)
     """
 
     # Filter combinations that do occure less than "other_threshold_5b" times
-    df_combinations = df_crossborder.groupby(['World Bank income group (Data origin)', 'World Bank income group (First author)']).filter(lambda x: len(x) >= other_threshold_5b)[['World Bank income group (First author)', 'World Bank income group (Data origin)']]
+    df_combinations = df.groupby(['Origin income group', 'Author income group']).filter(lambda x: len(x) >= other_threshold_5b)[['Origin income group', 'Author income group']]
     #df_combinations = (df_crossborder.groupby(['World Bank income group (First author)', 'World Bank income group (Data origin)']).size().reset_index(name='Count') )
 
-    df_combinations = df_combinations[['World Bank income group (Data origin)', 'World Bank income group (First author)']]
+    df_combinations = df_combinations[['Origin income group', 'Author income group']]
 
     # Append full country name
     #df_combinations = pd.merge(df_combinations, auxiliary_data, left_on='First author', right_on='Country', how='left')
@@ -429,7 +429,7 @@ def preprocess_figure_MIE_flows(df, other_threshold_5a=20, other_threshold_5b=0)
     #df_combinations = df_combinations[["First author", "Data origin_list",	"Name (Country first author)", "Name (Country data origin)"]]
 
     # Save to csv
-    df_combinations.to_csv('data_figure_MIE_flows.csv', sep =";", index=False)
+    df_combinations.to_csv('data_figure_MIE_flows2.csv', sep =";", index=False)
 
 def preprocess_figure_MIE_distri(df, income_groups, domestic=True):
     def filter_only_assigned_ICD_chapter(row):
@@ -546,6 +546,121 @@ def preprocess_MIE_IncomeGroup_dist(df, mode):
     # Save to csv
     df.to_csv('data_figure_MIE_IncomeGroup_dist_%s.csv' % (mode), sep =";", index=False)
 
+def preprocess_figure_MIE_domesticFraction(df):
+
+    def filter_crossborder_origin(row):
+        return row['Data origin_list'] != row["First author"]
+
+    def filter_various(row):
+        return row['Data origin_list'] != "various"
+
+    # Split between corssborder and domestic uses
+    df = df.explode('Data origin_list')
+    df = df[df.apply(filter_various, axis=1)]
+
+    # Read external CSV to append income group to first author
+    auxiliary_data = pd.read_csv("auxiliary_data/Country_information.csv", sep=";")[["Country", "World Bank income group"]]
+    df = pd.merge(df, auxiliary_data.rename(columns={"World Bank income group": "Origin income group"}), left_on='Data origin_list', right_on="Country", how='left')
+    df = pd.merge(df, auxiliary_data.rename(columns={"World Bank income group": "Author income group"}), left_on="First author", right_on="Country", how="left")
+
+    df["same_country"] = (df["First author"] == df["Data origin_list"])
+
+    income_groups = ["High-income economies", "Upper-middle-income economies", "Lower-middle-income economies", "Low-income economies"]
+
+    domestic_counts = (
+        df[df["same_country"]]["Origin income group"]
+        .value_counts()
+        .reindex(income_groups, fill_value=0)
+    )
+
+    sharing_counts = (
+        df[~df["same_country"]]["Origin income group"]
+        .value_counts()
+        .reindex(income_groups, fill_value=0)
+    )
+
+    # intra/inter sharing (compare author and origin group)
+    df["same_group"] = (df["Origin income group"] == df["Author income group"])
+
+    intra_counts = (
+        df[df["same_group"]]
+        ["Origin income group"]
+        .value_counts()
+        .reindex(income_groups, fill_value=0)
+    )
+    external_counts = (
+        df[~df["same_group"]]
+        ["Origin income group"]
+        .value_counts()
+        .reindex(income_groups, fill_value=0)
+    )
+
+    # Assemble the output dataframe
+    result = pd.DataFrame({
+        "World Bank income group": income_groups,
+        "Domestic count": domestic_counts.values,
+        "Sharing count": sharing_counts.values,
+        "Intra group sharing": intra_counts.values,
+        "External sharing": external_counts.values
+    })
+
+    result.to_csv('data_figure_MIE2_domesticFraction.csv', sep =";", index=False)
+
+def preprocess_figure_MIE_fig2(df, data_origin_group, author_origin_group):
+    def filter_only_assigned_ICD_chapter(row):
+        return row['ICD-10 chapter'] != ""
+
+    def filter_various(row):
+        return row['Data origin_list'] != "various"
+
+    # Split between corssborder and domestic uses
+    df = df.explode('Data origin_list')
+
+    # Filter various and unassigned ICD chapter
+    df = df[df.apply(filter_various, axis=1)]
+    df = df[df.apply(filter_only_assigned_ICD_chapter, axis=1)]
+
+    # Append income group of author and data
+    auxiliary_data = pd.read_csv("auxiliary_data/Country_information.csv", sep=";")[["Country", "World Bank income group"]]
+    df = pd.merge(df, auxiliary_data.rename(columns={"World Bank income group": "Origin income group"}),left_on='Data origin_list', right_on="Country", how='left')
+    df = pd.merge(df, auxiliary_data.rename(columns={"World Bank income group": "Author income group"}),left_on="First author", right_on="Country", how="left")
+
+    # Append mapping to GHE disease area
+    auxiliary_data = pd.read_csv("auxiliary_data/ICD_GHE_mapping.csv", sep=";", dtype="str")
+    df = pd.merge(df, auxiliary_data, on = "ICD-10 chapter", how="left")
+
+    # Filter for specific income group
+    df = df[df['Origin income group'].isin(data_origin_group)]
+    df = df[df['Author income group'].isin(author_origin_group)]
+
+    # Count occurrences of chapters
+    df = df['Disease area'].value_counts().reset_index()
+    df.columns = ['Disease area', 'Count (Disease area)']
+
+    # Fill missing values with 0
+    df.fillna(0, inplace=True)
+
+    # Convert float counts to integers
+    df['Count (Disease area)'] = df['Count (Disease area)'].astype(int)
+
+    # Calculate distribution
+    df['Distribution (Disease area)'] = df['Count (Disease area)'] * 100 / df['Count (Disease area)'].sum()
+
+    explicit_disease_areas = ["Infectious and parasitic diseases", "Respiratory Infectious and diseases", "Neoplasms", "Endocrine, Metabolic, Immune and Genitourinary Disorders", "Mental and neurological conditions", "Cardiovascular diseases"]
+
+    # Split country files into countries commonly mentioned and "other" by given threshold
+    df_other = df[~df['Disease area'].isin(explicit_disease_areas)]
+    df = df[df['Disease area'].isin(explicit_disease_areas)]
+
+    # Sort
+    df = df.sort_values("Disease area", ascending=False)
+
+    # Create and append "other" column
+    row_other = {"Disease area": "other", "Name (Disease area)": "other", "Count (Disease area)": df_other["Count (Disease area)"].sum(), "Distribution (Disease area)": df_other["Distribution (Disease area)"].sum()}
+    df = df._append(row_other, ignore_index=True)
+
+    df.to_csv('data_figure_MIE2_fig2_%s_%s.csv' % (data_origin_group, author_origin_group), sep =";", index=False)
+
 df_raw = load_and_preprocess_charting()
 #preprocess_scimagojr()
 #preprocess_figure_2(df_raw)
@@ -554,12 +669,16 @@ df_raw = load_and_preprocess_charting()
 #preprocess_figure_5(df_raw)
 #preprocess_figure_6(df_raw)
 #preprocess_figure_7(df_raw)
-preprocess_figure_MIE_flows(df_raw)
+#preprocess_figure_MIE_flows(df_raw)
 #preprocess_figure_MIE_distri(df_raw, ["High-income economies"], True)
 #preprocess_figure_MIE_distri(df_raw, ["High-income economies"], False)
 #preprocess_figure_MIE_distri(df_raw, ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'], True)
 #preprocess_MIE_IncomeGroup_dist(df_raw, 'Article')
 #preprocess_MIE_IncomeGroup_dist(df_raw, 'Data origin')
 #preprocess_MIE_IncomeGroup_dist(df_raw, 'First author')
+#preprocess_figure_MIE_domesticFraction(df_raw)
+preprocess_figure_MIE_fig2(df_raw,  ["High-income economies"], ["High-income economies"])
+preprocess_figure_MIE_fig2(df_raw, ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'], ["High-income economies"])
+preprocess_figure_MIE_fig2(df_raw, ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'], ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'])
 
 #preprocess_figure_S1(df_raw)
