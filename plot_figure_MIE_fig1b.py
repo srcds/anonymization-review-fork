@@ -44,8 +44,8 @@ def plot_figure_MIE_flows(df):
     color_dict = {"layer1": {
                     'Low-income economies' : cmap_p2.colors[3],
                     'Lower-middle-income economies': cmap_p2.colors[2],
-                    'Upper-middle-income economies': cmap_p2.colors[1],
-                    'High-income economies': cmap_p2.colors[0],},
+                    'Upper-middle-income economies': cmap_p2.colors[4],
+                    'High-income economies': cmap_p2.colors[5],},
                   "layer2": {
                     'Upper-middle-income economies': cmap_p2.colors[7],
                     'High-income economies': cmap_p2.colors[7],
@@ -55,8 +55,8 @@ def plot_figure_MIE_flows(df):
     color_dict = {"layer1": {
                     'Low-income' : cmap_p2.colors[3],
                     'Lower-middle\nincome': cmap_p2.colors[2],
-                    'Upper-middle\nincome': cmap_p2.colors[1],
-                    'High-income': cmap_p2.colors[0],},
+                    'Upper-middle\nincome': cmap_p2.colors[4],
+                    'High-income': cmap_p2.colors[5],},
                   "layer2": {
                     'Upper-middle\nincome': cmap_p2.colors[7],
                     'High-income': cmap_p2.colors[7],
@@ -92,8 +92,8 @@ def plot_figure_MIE_flows(df):
 
     # Plot and save
     fig.tight_layout()
-    plt.savefig("figure_output/figure_MIE_flows.svg", bbox_inches='tight')
-    plt.savefig("figure_output/figure_MIE_flows.png", bbox_inches='tight')
+    plt.savefig("figure_output/figure_MIE_fig1b.svg", bbox_inches='tight')
+    plt.savefig("figure_output/figure_MIE_fig1b.png", bbox_inches='tight')
     plt.show()
     plt.close()
     plt.show()

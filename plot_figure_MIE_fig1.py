@@ -27,12 +27,12 @@ mpl.rcParams['xtick.color'] = COLOR
 mpl.rcParams['ytick.color'] = COLOR
 
 # Read the data
-df = pd.read_csv("data_figure_MIE_fig1.csv", sep=";")
+df = pd.read_csv("data_figure_MIE_fig1a.csv", sep=";")
 
 def plot_distribution(df):
 
     # Prepare data
-    categories = ["Domestic", "Intra-group sharing", "Extra-group sharing"]
+    categories = ["Intra-group sharing", "Extra-group sharing"]
     economies = [
         "Low-income economies",
         "Lower-middle-income economies",
@@ -80,14 +80,13 @@ def plot_distribution(df):
             else:
                 cum_width += 0
 
-    plt.legend(["Same country",
-               "Same income group",
+    plt.legend(["Same income group",
                "Different income group"],
               title="First author–Data origin relationship", loc='lower center', ncols=2, bbox_to_anchor=(0.5, 1))
     plt.tight_layout()
-    plt.savefig("figure_output/distribution_plot.svg", bbox_inches='tight')
-    plt.savefig("figure_output/distribution_plot.png", bbox_inches='tight')
-    plt.savefig("figure_output/distribution_plot.pdf", bbox_inches='tight')
+    plt.savefig("figure_output/figure_MIE_fig1a.svg", bbox_inches='tight')
+    plt.savefig("figure_output/figure_MIE_fig1a.png", bbox_inches='tight')
+    plt.savefig("figure_output/figure_MIE_fig1a.pdf", bbox_inches='tight')
     plt.show()
 
 plot_distribution(df)
