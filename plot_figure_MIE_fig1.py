@@ -65,7 +65,7 @@ def plot_distribution(df):
     ax.set_ylabel("Data origin by\ncountry income group", fontsize=10)
     #ax.legend(title="Sharing Type", bbox_to_anchor=(1.02, 1), loc='upper left')
     #ax.set_title("Distribution of Data Sharing Types by Economy Type")
-    ax.set_yticklabels(["Low-income", "Lower-middle\nincome", "Upper-middle\nincome", "High-income"], fontsize=9)
+    ax.set_yticklabels(["Low-income", "Lower-middle\nincome", "Upper-middle\nincome", "High-income"], fontsize=10)
 
     # Add count labels
     for i, econ in enumerate(dist_df.index):
