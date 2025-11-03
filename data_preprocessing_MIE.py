@@ -208,18 +208,18 @@ def preprocess_figure_MIE_fig2(df, data_origin_group, author_origin_group):
     # Calculate distribution
     df['Distribution (Disease area)'] = df['Count (Disease area)'] * 100 / df['Count (Disease area)'].sum()
 
-    explicit_disease_areas = ["Infectious and parasitic diseases", "Respiratory Infectious and diseases", "Neoplasms", "Endocrine, Metabolic, Immune and Genitourinary Disorders", "Mental and neurological conditions", "Cardiovascular diseases"]
+    explicit_disease_areas = ["Infectious and parasitic diseases", "Respiratory Infectious and diseases", "Neoplasms", "Endocrine, Metabolic, Immune and Genitourinary Disorders", "Mental and neurological conditions", "Cardiovascular diseases", "Injuries"]
 
     # Split country files into countries commonly mentioned and "other" by given threshold
-    df_other = df[~df['Disease area'].isin(explicit_disease_areas)]
-    df = df[df['Disease area'].isin(explicit_disease_areas)]
+    #df_other = df[~df['Disease area'].isin(explicit_disease_areas)]
+    #df = df[df['Disease area'].isin(explicit_disease_areas)]
 
     # Sort
     df = df.sort_values("Disease area", ascending=False)
 
     # Create and append "other" column
-    row_other = {"Disease area": "other", "Name (Disease area)": "other", "Count (Disease area)": df_other["Count (Disease area)"].sum(), "Distribution (Disease area)": df_other["Distribution (Disease area)"].sum()}
-    df = df._append(row_other, ignore_index=True)
+    #row_other = {"Disease area": "other", "Name (Disease area)": "other", "Count (Disease area)": df_other["Count (Disease area)"].sum(), "Distribution (Disease area)": df_other["Distribution (Disease area)"].sum()}
+    #df = df._append(row_other, ignore_index=True)
 
     df.to_csv('data_figure_MIE2_fig2_%s_%s.csv' % (data_origin_group, author_origin_group), sep =";", index=False)
 
@@ -280,8 +280,8 @@ df_raw = load_and_preprocess_charting()
 #preprocess_figure_MIE_fig1a(df_raw)
 #preprocess_figure_MIE_fig1b(df_raw)
 
-preprocess_figure_MIE_fig2_ICD(df_raw,  ["High-income economies"], ["High-income economies"])
-preprocess_figure_MIE_fig2_ICD(df_raw, ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'], ["High-income economies"])
-preprocess_figure_MIE_fig2_ICD(df_raw, ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'], ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'])
+preprocess_figure_MIE_fig2(df_raw,  ["High-income economies"], ["High-income economies"])
+preprocess_figure_MIE_fig2(df_raw, ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'], ["High-income economies"])
+preprocess_figure_MIE_fig2(df_raw, ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'], ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'])
 
 #preprocess_figure_S1(df_raw)

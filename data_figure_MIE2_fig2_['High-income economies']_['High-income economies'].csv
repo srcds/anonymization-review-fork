@@ -1,8 +1,17 @@
-Disease area;Count (Disease area);Distribution (Disease area);Name (Disease area)
-Respiratory Infectious and diseases;106;11.076280041797283;
-Neoplasms;172;17.972831765935215;
-Mental and neurological conditions;159;16.614420062695924;
-Infectious and parasitic diseases;53;5.538140020898641;
-Endocrine, Metabolic, Immune and Genitourinary Disorders;134;14.00208986415883;
-Cardiovascular diseases;133;13.897596656217345;
-other;200;20.89864158829676;other
+Disease area;Count (Disease area);Distribution (Disease area)
+unassigned;37;3.8662486938349008
+Sudden infant death syndrome;12;1.2539184952978057
+Skin diseases;21;2.19435736677116
+Sense organ diseases;6;0.6269592476489029
+Respiratory Infectious and diseases;106;11.076280041797283
+Neoplasms;172;17.972831765935215
+Neonatal conditions;8;0.8359456635318704
+Musculoskeletal diseases;55;5.747126436781609
+Mental and neurological conditions;159;16.614420062695924
+Maternal conditions;23;2.4033437826541273
+Injuries;2;0.2089864158829676
+Infectious and parasitic diseases;53;5.538140020898641
+Endocrine, Metabolic, Immune and Genitourinary Disorders;134;14.00208986415883
+Digestive diseases;28;2.9258098223615465
+Congenital anomalies;8;0.8359456635318704
+Cardiovascular diseases;133;13.897596656217345
