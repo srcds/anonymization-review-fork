@@ -275,13 +275,35 @@ def preprocess_figure_MIE_fig2_ICD(df, data_origin_group, author_origin_group):
     df.to_csv('data_figure_MIE2_fig2_ICD_%s_%s.csv' % (data_origin_group, author_origin_group), sep =";", index=False)
 
 
+def expand_main_sheet(df):
+
+
+    df = df.explode('Data origin_list')
+
+    # Append income group of author and data
+    auxiliary_data = pd.read_csv("auxiliary_data/Country_information.csv", sep=";")[["Country", "World Bank income group"]]
+    df = pd.merge(df, auxiliary_data.rename(columns={"World Bank income group": "Origin income group"}), left_on='Data origin_list', right_on="Country", how='left')
+    df = pd.merge(df, auxiliary_data.rename(columns={"World Bank income group": "Author income group"}), left_on="First author", right_on="Country", how="left")
+
+    # Append mapping to GHE disease area
+    auxiliary_data = pd.read_csv("auxiliary_data/ICD_GHE_mapping.csv", sep=";", dtype="str")
+    df = pd.merge(df, auxiliary_data, on = "ICD-10 chapter", how="left")
+
+    df["same_group"] = (df["Author income group"] == df["Origin income group"])
+    df["same_country"] = (df["Data origin_list"] == df["First author"])
+
+    df.to_csv('data_MIE_expanded.csv', sep=";", index=False)
+
+
 df_raw = load_and_preprocess_charting()
 
 #preprocess_figure_MIE_fig1a(df_raw)
 #preprocess_figure_MIE_fig1b(df_raw)
 
-preprocess_figure_MIE_fig2(df_raw,  ["High-income economies"], ["High-income economies"])
-preprocess_figure_MIE_fig2(df_raw, ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'], ["High-income economies"])
-preprocess_figure_MIE_fig2(df_raw, ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'], ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'])
+#preprocess_figure_MIE_fig2(df_raw,  ["High-income economies"], ["High-income economies"])
+#preprocess_figure_MIE_fig2(df_raw, ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'], ["High-income economies"])
+#preprocess_figure_MIE_fig2(df_raw, ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'], ['Low-income economies', 'Lower-middle-income economies', 'Upper-middle-income economies'])
+
+expand_main_sheet(df_raw)
 
 #preprocess_figure_S1(df_raw)
